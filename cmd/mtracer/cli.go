@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+
+	"github.com/yuuki/mkr-flow-tracer/db"
 )
 
 const (
@@ -25,13 +27,15 @@ func (c *CLI) Run(args []string) int {
 	log.SetOutput(c.errStream)
 
 	var (
-		ver bool
+		ver          bool
+		createSchema bool
 	)
 	flags := flag.NewFlagSet("mtracer", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
 	flags.Usage = func() {
 		fmt.Fprint(c.errStream, helpText)
 	}
+	flags.BoolVar(&createSchema, "create-schema", false, "")
 	flags.BoolVar(&ver, "version", false, "")
 	if err := flags.Parse(args[1:]); err != nil {
 		return exitCodeErr
@@ -39,6 +43,22 @@ func (c *CLI) Run(args []string) int {
 
 	if ver {
 		// fmt.Fprintf(c.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
+		return exitCodeOK
+	}
+
+	if createSchema {
+		log.Println("Connecting postgres ...")
+		db, err := db.New()
+		if err != nil {
+			log.Printf("postgres initialize error: %v\n", err)
+			return exitCodeErr
+		}
+
+		log.Println("Creating postgres schema ...")
+		if err := db.CreateSchema(); err != nil {
+			log.Printf("postgres initialize error: %v\n", err)
+			return exitCodeErr
+		}
 		return exitCodeOK
 	}
 
