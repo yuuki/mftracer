@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
+
+	"github.com/yuuki/mkr-flow-tracer/agent"
 )
 
 const (
-	exitCodeOK  = 0
-	exitCodeErr = 10 + iota
+	exitCodeOK         = 0
+	exitCodeErr        = 10 + iota
+	defaultIntervalSec = 30
 )
 
 // CLI is the command line object.
@@ -41,6 +45,8 @@ func (c *CLI) Run(args []string) int {
 		// fmt.Fprintf(c.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
 		return exitCodeOK
 	}
+
+	agent.Start(defaultIntervalSec * time.Second)
 
 	return exitCodeOK
 }
