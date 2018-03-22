@@ -56,7 +56,7 @@
     "unix",
     "windows"
   ]
-  revision = "bb729a57828d76e3050e664d86aa052741ab620f"
+  revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
 
 [solve-meta]
   analyzer-name = "dep"
