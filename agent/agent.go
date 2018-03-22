@@ -37,16 +37,23 @@ func Watch(interval time.Duration, db *db.DB) error {
 				log.Printf("%v\n", err)
 			}
 		case <-ticker.C:
-			go CollectAndPostHostFlows(db, errChan)
+			go collectAndPostHostFlows(db, errChan)
 		}
 		time.Sleep(1 * time.Second)
 	}
 	return nil
 }
 
-// CollectAndPostHostFlows collect host flows and
+// RunOnce runs agent once.
+func RunOnce(db *db.DB) error {
+	errChan := make(chan error, 1)
+	collectAndPostHostFlows(db, errChan)
+	return <-errChan
+}
+
+// collectAndPostHostFlows collect host flows and
 // post it to the data store.
-func CollectAndPostHostFlows(db *db.DB, errChan chan error) {
+func collectAndPostHostFlows(db *db.DB, errChan chan error) {
 	flows, err := collector.CollectHostFlows()
 	if err != nil {
 		errChan <- err

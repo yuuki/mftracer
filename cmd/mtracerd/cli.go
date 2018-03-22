@@ -30,13 +30,15 @@ func (c *CLI) Run(args []string) int {
 	log.SetOutput(c.errStream)
 
 	var (
-		ver bool
+		ver  bool
+		once bool
 	)
 	flags := flag.NewFlagSet("mtracerd", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
 	flags.Usage = func() {
 		fmt.Fprint(c.errStream, helpText)
 	}
+	flags.BoolVar(&once, "once", false, "")
 	flags.BoolVar(&ver, "version", false, "")
 	if err := flags.Parse(args[1:]); err != nil {
 		return exitCodeErr
@@ -55,7 +57,14 @@ func (c *CLI) Run(args []string) int {
 	}
 	log.Println("Connected postgres")
 
-	agent.Start(defaultIntervalSec*time.Second, db)
+	if once {
+		if err := agent.RunOnce(db); err != nil {
+			log.Printf("%v\n", err)
+			return exitCodeErr
+		}
+	} else {
+		agent.Start(defaultIntervalSec*time.Second, db)
+	}
 
 	return exitCodeOK
 }
@@ -65,6 +74,7 @@ var helpText = `Usage: mtracerd [options]
   
 
 Options:
+  --once                    run once
   --version, -v	            print version
   --help, -h                print help
 `
