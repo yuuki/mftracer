@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/yuuki/mkr-flow-tracer/collector"
-	"github.com/yuuki/mkr-flow-tracer/datastore"
+	"github.com/yuuki/mkr-flow-tracer/db"
 )
 
 // Start starts agent.
-func Start(interval time.Duration) {
-	go Watch(interval)
+func Start(interval time.Duration, db *db.DB) {
+	go Watch(interval, db)
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, syscall.SIGTERM, syscall.SIGINT)
@@ -21,10 +21,12 @@ func Start(interval time.Duration) {
 	log.Printf("Received %s gracefully shutdown...\n", sig)
 
 	time.Sleep(3 * time.Second)
+	log.Printf("Closing db connection...\n", sig)
+	db.Close()
 }
 
 // Watch watches host flows for localhost.
-func Watch(interval time.Duration) error {
+func Watch(interval time.Duration, db *db.DB) error {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	errChan := make(chan error, 1)
@@ -32,10 +34,10 @@ func Watch(interval time.Duration) error {
 		select {
 		case err := <-errChan:
 			if err != nil {
-				return err
+				log.Printf("%v\n", err)
 			}
 		case <-ticker.C:
-			go CollectAndPostHostFlows(errChan)
+			go CollectAndPostHostFlows(db, errChan)
 		}
 		time.Sleep(1 * time.Second)
 	}
@@ -44,12 +46,12 @@ func Watch(interval time.Duration) error {
 
 // CollectAndPostHostFlows collect host flows and
 // post it to the data store.
-func CollectAndPostHostFlows(errChan chan error) {
+func CollectAndPostHostFlows(db *db.DB, errChan chan error) {
 	flows, err := collector.CollectHostFlows()
 	if err != nil {
 		errChan <- err
 		return
 	}
-	errChan <- datastore.PostHostFlows(flows)
+	errChan <- db.PostHostFlows(flows)
 	log.Printf("Post host flows (%d)", len(flows))
 }

@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS flows (
     created                 timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated                 timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    UNIQUE (direction, source_node_id, destination_node_id)
+    UNIQUE (source_node_id, destination_node_id, direction)
 );
-CREATE INDEX IF NOT EXISTS source_dest_node_id ON flows USING btree (source_node_id, destination_node_id);
-CREATE INDEX IF NOT EXISTS dest_source_node_id ON flows USING btree (destination_node_id, source_node_id);
+CREATE UNIQUE INDEX IF NOT EXISTS source_dest_direction_idx ON flows USING btree (source_node_id, destination_node_id, direction);
+CREATE INDEX IF NOT EXISTS dest_source_idx ON flows USING btree (destination_node_id, source_node_id);

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/yuuki/mkr-flow-tracer/agent"
+	"github.com/yuuki/mkr-flow-tracer/db"
 )
 
 const (
@@ -46,7 +47,15 @@ func (c *CLI) Run(args []string) int {
 		return exitCodeOK
 	}
 
-	agent.Start(defaultIntervalSec * time.Second)
+	log.Println("--> Connecting postgres ...")
+	db, err := db.New()
+	if err != nil {
+		log.Printf("postgres initialize error: %v\n", err)
+		return exitCodeErr
+	}
+	log.Println("Connected postgres")
+
+	agent.Start(defaultIntervalSec*time.Second, db)
 
 	return exitCodeOK
 }
