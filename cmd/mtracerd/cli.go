@@ -59,7 +59,7 @@ func (c *CLI) Run(args []string) int {
 
 	if once {
 		if err := agent.RunOnce(db); err != nil {
-			log.Printf("%v\n", err)
+			log.Printf("%+v\n", err)
 			return exitCodeErr
 		}
 	} else {

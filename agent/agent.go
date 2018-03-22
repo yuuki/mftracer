@@ -34,7 +34,7 @@ func Watch(interval time.Duration, db *db.DB) error {
 		select {
 		case err := <-errChan:
 			if err != nil {
-				log.Printf("%v\n", err)
+				log.Printf("%+v\n", err)
 			}
 		case <-ticker.C:
 			go collectAndPostHostFlows(db, errChan)
