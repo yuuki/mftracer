@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/yuuki/lstf/tcpflow"
-	"github.com/yuuki/mkr-flow-tracer/data"
+	"github.com/yuuki/mftracer/data"
 )
 
 const (

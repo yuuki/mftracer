@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/yuuki/mkr-flow-tracer/agent"
-	"github.com/yuuki/mkr-flow-tracer/db"
+	"github.com/yuuki/mftracer/agent"
+	"github.com/yuuki/mftracer/db"
 )
 
 const (
@@ -33,7 +33,7 @@ func (c *CLI) Run(args []string) int {
 		ver  bool
 		once bool
 	)
-	flags := flag.NewFlagSet("mtracerd", flag.ContinueOnError)
+	flags := flag.NewFlagSet("mftracerd", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
 	flags.Usage = func() {
 		fmt.Fprint(c.errStream, helpText)

@@ -1,4 +1,4 @@
-PKG = github.com/yuuki/mkr-flow-tracer
+PKG = github.com/yuuki/mftracer
 COMMIT = $$(git describe --tags --always)
 DATE = $$(date --utc '+%Y-%m-%d_%H:%M:%S')
 BUILD_LDFLAGS = -X $(PKG).commit=$(COMMIT) -X $(PKG).date=$(DATE)

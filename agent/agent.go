@@ -7,8 +7,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/yuuki/mkr-flow-tracer/collector"
-	"github.com/yuuki/mkr-flow-tracer/db"
+	"github.com/yuuki/mftracer/collector"
+	"github.com/yuuki/mftracer/db"
 )
 
 // Start starts agent.
