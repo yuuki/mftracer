@@ -2,9 +2,9 @@ package tcpflow
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
+	"strconv"
 
 	gnet "github.com/shirou/gopsutil/net"
 	"github.com/yuuki/lstf/netutil"
@@ -22,17 +22,22 @@ const (
 	FlowPassive
 )
 
-// MarshalJSON returns human readable `mode` format.
-func (c FlowDirection) MarshalJSON() ([]byte, error) {
+// String returns string representation.
+func (c FlowDirection) String() string {
 	switch c {
 	case FlowActive:
-		return json.Marshal("active")
+		return "active"
 	case FlowPassive:
-		return json.Marshal("passive")
+		return "passive"
 	case FlowUnknown:
-		return json.Marshal("unknown")
+		return "unknown"
 	}
-	return nil, errors.New("unreachable code")
+	return ""
+}
+
+// MarshalJSON returns human readable `mode` format.
+func (c FlowDirection) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.String())
 }
 
 // AddrPort are <addr>:<port>
@@ -44,6 +49,15 @@ type AddrPort struct {
 // String returns the string representation of the AddrPort.
 func (a *AddrPort) String() string {
 	return net.JoinHostPort(a.Addr, a.Port)
+}
+
+// PortInt returnts integer representation.
+func (a *AddrPort) PortInt() int {
+	if a.Port == "many" {
+		return 0
+	}
+	i, _ := strconv.Atoi(a.Port)
+	return i
 }
 
 // HostFlow represents a `host flow`.
@@ -116,13 +130,13 @@ func GetHostFlows() (HostFlows, error) {
 		if contains(ports, lport) {
 			flows.insert(&HostFlow{
 				Direction: FlowPassive,
-				Local:     &AddrPort{Addr: "localhost", Port: lport},
+				Local:     &AddrPort{Addr: conn.Laddr.IP, Port: lport},
 				Peer:      &AddrPort{Addr: conn.Raddr.IP, Port: "many"},
 			})
 		} else {
 			flows.insert(&HostFlow{
 				Direction: FlowActive,
-				Local:     &AddrPort{Addr: "localhost", Port: "many"},
+				Local:     &AddrPort{Addr: conn.Laddr.IP, Port: "many"},
 				Peer:      &AddrPort{Addr: conn.Raddr.IP, Port: rport},
 			})
 		}

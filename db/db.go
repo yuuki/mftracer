@@ -72,18 +72,27 @@ func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
 	q1 := `
 	INSERT INTO nodes (ipv4, port) VALUES ($1, $2)
 	ON CONFLICT (ipv4, port) DO NOTHING
-	RETURNING *
+	RETURNING node_id
 `
 	stmt1, err := tx.PrepareContext(ctx, q1)
 	if err != nil {
 		cancel()
 		return errors.Wrapf(err, "query prepare error: %s", q1)
 	}
+	stmtFindNodeID, err := tx.PrepareContext(ctx, `
+	SELECT node_id FROM nodes WHERE ipv4 = $1 AND port = $2
+`)
+	if err != nil {
+		cancel()
+		return errors.Wrap(err, "query prepare error")
+	}
 	q2 := `
 	INSERT INTO flows
 	(direction, source_node_id, destination_node_id, connections, updated)
 	VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-	ON CONFLICT ON CONSTRAINT source_dest_direction_idx DO UPDATE
+	ON CONFLICT (source_node_id, destination_node_id, direction) 
+	DO UPDATE SET
+	direction=$1, source_node_id=$2, destination_node_id=$3, connections=$4, updated=CURRENT_TIMESTAMP
 `
 	stmt2, err := tx.PrepareContext(ctx, q2)
 	if err != nil {
@@ -92,13 +101,31 @@ func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
 	}
 
 	for _, flow := range flows {
+		if flow.Local.Addr == "127.0.0.1" || flow.Local.Addr == "::1" || flow.Peer.Addr == "127.0.0.1" || flow.Peer.Addr == "::1" {
+			continue
+		}
 		var localNodeid, peerNodeid int64
-		err := stmt1.QueryRowContext(ctx, q1, flow.Peer.Addr, flow.Peer.Port).Scan(&peerNodeid)
+		err := stmt1.QueryRowContext(ctx, flow.Local.Addr, flow.Local.PortInt()).Scan(&localNodeid)
+		if err == sql.ErrNoRows {
+			err = stmtFindNodeID.QueryRowContext(ctx, flow.Local.Addr, flow.Local.PortInt()).Scan(&localNodeid)
+		}
 		if err != nil {
 			cancel()
 			return errors.Wrapf(err, "query error")
 		}
-		_, err = stmt2.ExecContext(ctx, q2, flow.Direction, localNodeid, peerNodeid, flow.Connections)
+		err = stmt1.QueryRowContext(ctx, flow.Peer.Addr, flow.Peer.PortInt()).Scan(&peerNodeid)
+		if err == sql.ErrNoRows {
+			err = stmtFindNodeID.QueryRowContext(ctx, flow.Peer.Addr, flow.Peer.PortInt()).Scan(&peerNodeid)
+		}
+		if err != nil {
+			cancel()
+			return errors.Wrapf(err, "query error")
+		}
+		if flow.Direction == tcpflow.FlowActive {
+			_, err = stmt2.ExecContext(ctx, flow.Direction.String(), localNodeid, peerNodeid, flow.Connections)
+		} else if flow.Direction == tcpflow.FlowPassive {
+			_, err = stmt2.ExecContext(ctx, flow.Direction.String(), peerNodeid, localNodeid, flow.Connections)
+		}
 		if err != nil {
 			cancel()
 			return errors.Wrapf(err, "query error")

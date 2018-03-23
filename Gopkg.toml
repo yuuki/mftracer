@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/yuuki/lstf"
-  version = "0.2.1"
+  revision = "2e9a47b96711c3db50447e7926ac4352644c9ae2"
 
 [prune]
   go-tests = true
