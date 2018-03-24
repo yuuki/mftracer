@@ -91,12 +91,12 @@ func (db *DB) CreateSchema() error {
 }
 
 const (
-	POST_TIMEOUT_SEC = 10
+	InsertOrUpdateTimeoutSec = 10
 )
 
 // InsertOrUpdateHostFlows insert host flows or update it if the same flow exists.
 func (db *DB) InsertOrUpdateHostFlows(flows tcpflow.HostFlows) error {
-	ctx, cancel := context.WithTimeout(context.Background(), POST_TIMEOUT_SEC*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), InsertOrUpdateTimeoutSec*time.Second)
 	defer cancel()
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
