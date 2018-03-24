@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	Schemas = []string{
+	schemas = []string{
 		"../data/schema/flows.sql",
 	}
 )
@@ -77,7 +77,7 @@ func New(opt *Opt) (*DB, error) {
 
 // CreateSchema creates the table schemas defined by the paths including Schemas.
 func (db *DB) CreateSchema() error {
-	for _, schema := range Schemas {
+	for _, schema := range schemas {
 		sql, err := data.Asset(schema)
 		if err != nil {
 			return errors.Wrapf(err, "get schema error: %v", schema)
