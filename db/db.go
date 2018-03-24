@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -161,4 +162,58 @@ func (db *DB) InsertOrUpdateHostFlows(flows tcpflow.HostFlows) error {
 		return errors.Wrap(err, "transaction commit error")
 	}
 	return nil
+}
+
+// AddrPort are IP addr and port.
+type AddrPort struct {
+	IPAddr      net.IP
+	Port        int16
+	Connections int
+}
+
+func (a *AddrPort) String() string {
+	port := fmt.Sprintf("%d", a.Port)
+	if a.Port == 0 {
+		port = "many"
+	}
+	return fmt.Sprintf("%s:%s (connections:%d)", a.IPAddr, port, a.Connections)
+}
+
+// FindSourceByDestIPAddr find source ip addrs.
+func (db *DB) FindSourceByDestIPAddr(addr net.IP) ([]*AddrPort, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	rows, err := db.QueryContext(ctx, `
+	SELECT
+		connections, updated, source_nodes.ipv4 AS source_ipv4, source_nodes.port AS source_port 
+	FROM flows
+	INNER JOIN nodes AS source_nodes ON source_nodes.node_id = flows.source_node_id
+	INNER JOIN nodes AS dest_nodes on dest_nodes.node_id = flows.destination_node_id
+	WHERE direction = 'passive' AND dest_nodes.ipv4 = $1
+`, addr.String())
+	if err == sql.ErrNoRows {
+		return []*AddrPort{}, nil
+	}
+	defer rows.Close()
+	addrports := make([]*AddrPort, 0)
+	for rows.Next() {
+		var (
+			connections int
+			updated     time.Time
+			source_ipv4 string
+			source_port int16
+		)
+		if err := rows.Scan(&connections, &updated, &source_ipv4, &source_port); err != nil {
+			return nil, errors.Wrap(err, "postgres query error")
+		}
+		addrports = append(addrports, &AddrPort{
+			IPAddr:      net.ParseIP(source_ipv4),
+			Port:        source_port,
+			Connections: connections,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "postgres rows error")
+	}
+	return addrports, nil
 }

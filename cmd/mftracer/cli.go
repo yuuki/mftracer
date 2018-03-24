@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 
 	"github.com/yuuki/mftracer/db"
 )
@@ -34,6 +35,7 @@ func (c *CLI) Run(args []string) int {
 		dbhost       string
 		dbport       string
 		dbname       string
+		destipv4     string
 	)
 	flags := flag.NewFlagSet("mftracer", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
@@ -41,6 +43,7 @@ func (c *CLI) Run(args []string) int {
 		fmt.Fprint(c.errStream, helpText)
 	}
 	flags.BoolVar(&createSchema, "create-schema", false, "")
+	flags.StringVar(&destipv4, "dest-ipv4", "", "")
 	flags.StringVar(&dbuser, "dbuser", "", "")
 	flags.StringVar(&dbpass, "dbpass", "", "")
 	flags.StringVar(&dbhost, "dbhost", "", "")
@@ -76,6 +79,32 @@ func (c *CLI) Run(args []string) int {
 			return exitCodeErr
 		}
 		return exitCodeOK
+	}
+
+	if destipv4 != "" {
+		db, err := db.New(&db.Opt{
+			DBName:   dbname,
+			User:     dbuser,
+			Password: dbpass,
+			Host:     dbhost,
+			Port:     dbport,
+		})
+		if err != nil {
+			log.Printf("postgres initialize error: %v\n", err)
+			return exitCodeErr
+		}
+
+		ip := net.ParseIP(destipv4)
+		addrports, err := db.FindSourceByDestIPAddr(ip)
+		if err != nil {
+			log.Printf("postgres find source error: %v\n", err)
+			return exitCodeErr
+		}
+		fmt.Println(ip)
+		for _, addrport := range addrports {
+			fmt.Print("└<-- ")
+			fmt.Println(addrport)
+		}
 	}
 
 	return exitCodeOK
