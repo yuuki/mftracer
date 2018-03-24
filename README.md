@@ -1,8 +1,10 @@
 # mftracer
 
+[license]: https://github.com/yuuki/lstf/blob/master/LICENSE
+
 ## License
 
-[MIT][license]
+[MIT][license] License.
 
 ## Author
 
