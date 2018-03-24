@@ -14,8 +14,11 @@ import (
 )
 
 const (
-	DefaultDBUserName = "mtracer"
-	DefaultDBName     = "mtracer"
+	DefaultDBName     = "mftracer"
+	DefaultDBUserName = "mftracer"
+	DefaultDBHostname = "localhost"
+	DefaultDBPort     = "5432"
+	ConnectTimeout    = 5
 )
 
 var (
@@ -29,10 +32,38 @@ type DB struct {
 	*sql.DB
 }
 
+// Opt are options for database connection.
+// https://godoc.org/github.com/lib/pq
+type Opt struct {
+	DBName   string
+	User     string
+	Password string
+	Host     string
+	Port     string
+	SSLMode  string
+}
+
 // New creates the DB object.
-func New() (*DB, error) {
+func New(opt *Opt) (*DB, error) {
+	var user, dbname, host, port, sslmode string
+	if user = opt.User; user == "" {
+		user = DefaultDBUserName
+	}
+	if dbname = opt.DBName; dbname == "" {
+		dbname = DefaultDBName
+	}
+	if host = opt.Host; host == "" {
+		host = DefaultDBHostname
+	}
+	if port = opt.Port; port == "" {
+		port = DefaultDBPort
+	}
+	if sslmode = opt.SSLMode; sslmode == "" {
+		sslmode = "disable"
+	}
 	db, err := sql.Open("postgres", fmt.Sprintf(
-		"user=%s dbname=%s sslmode=disable", DefaultDBUserName, DefaultDBName,
+		"user=%s password=%s host=%s port=%s dbname=%s sslmode=%s connect_timeout=%d",
+		user, opt.Password, host, port, dbname, sslmode, ConnectTimeout,
 	))
 	if err != nil {
 		return nil, errors.Wrap(err, "postgres open error")

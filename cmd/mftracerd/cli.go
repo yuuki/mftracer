@@ -30,8 +30,13 @@ func (c *CLI) Run(args []string) int {
 	log.SetOutput(c.errStream)
 
 	var (
-		ver  bool
-		once bool
+		ver    bool
+		once   bool
+		dbuser string
+		dbpass string
+		dbhost string
+		dbport string
+		dbname string
 	)
 	flags := flag.NewFlagSet("mftracerd", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
@@ -39,6 +44,11 @@ func (c *CLI) Run(args []string) int {
 		fmt.Fprint(c.errStream, helpText)
 	}
 	flags.BoolVar(&once, "once", false, "")
+	flags.StringVar(&dbuser, "dbuser", "", "")
+	flags.StringVar(&dbpass, "dbpass", "", "")
+	flags.StringVar(&dbhost, "dbhost", "", "")
+	flags.StringVar(&dbport, "dbport", "", "")
+	flags.StringVar(&dbname, "dbname", "", "")
 	flags.BoolVar(&ver, "version", false, "")
 	if err := flags.Parse(args[1:]); err != nil {
 		return exitCodeErr
@@ -50,7 +60,13 @@ func (c *CLI) Run(args []string) int {
 	}
 
 	log.Println("--> Connecting postgres ...")
-	db, err := db.New()
+	db, err := db.New(&db.Opt{
+		DBName:   dbname,
+		User:     dbuser,
+		Password: dbpass,
+		Host:     dbhost,
+		Port:     dbport,
+	})
 	if err != nil {
 		log.Printf("postgres initialize error: %v\n", err)
 		return exitCodeErr
@@ -75,6 +91,11 @@ var helpText = `Usage: mtracerd [options]
 
 Options:
   --once                    run once
+  --dbuser                  postgres user
+  --dbpass                  postgres user password
+  --dbhost                  postgres host
+  --dbport                  postgres port
+  --dbname                  postgres database name
   --version, -v	            print version
   --help, -h                print help
 `

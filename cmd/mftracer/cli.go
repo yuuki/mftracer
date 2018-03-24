@@ -29,6 +29,11 @@ func (c *CLI) Run(args []string) int {
 	var (
 		ver          bool
 		createSchema bool
+		dbuser       string
+		dbpass       string
+		dbhost       string
+		dbport       string
+		dbname       string
 	)
 	flags := flag.NewFlagSet("mftracer", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
@@ -36,6 +41,11 @@ func (c *CLI) Run(args []string) int {
 		fmt.Fprint(c.errStream, helpText)
 	}
 	flags.BoolVar(&createSchema, "create-schema", false, "")
+	flags.StringVar(&dbuser, "dbuser", "", "")
+	flags.StringVar(&dbpass, "dbpass", "", "")
+	flags.StringVar(&dbhost, "dbhost", "", "")
+	flags.StringVar(&dbport, "dbport", "", "")
+	flags.StringVar(&dbname, "dbname", "", "")
 	flags.BoolVar(&ver, "version", false, "")
 	if err := flags.Parse(args[1:]); err != nil {
 		return exitCodeErr
@@ -48,7 +58,13 @@ func (c *CLI) Run(args []string) int {
 
 	if createSchema {
 		log.Println("Connecting postgres ...")
-		db, err := db.New()
+		db, err := db.New(&db.Opt{
+			DBName:   dbname,
+			User:     dbuser,
+			Password: dbpass,
+			Host:     dbhost,
+			Port:     dbport,
+		})
 		if err != nil {
 			log.Printf("postgres initialize error: %v\n", err)
 			return exitCodeErr
@@ -70,6 +86,12 @@ var helpText = `Usage: mtracer [options]
   
 
 Options:
+  --create-schema           create mftracer table schema for postgres
+  --dbuser                  postgres user
+  --dbpass                  postgres user password
+  --dbhost                  postgres host
+  --dbport                  postgres port
+  --dbname                  postgres database name
   --version, -v	            print version
   --help, -h                print help
 `
