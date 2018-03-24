@@ -95,9 +95,9 @@ const (
 
 func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
 	ctx, cancel := context.WithTimeout(context.Background(), POST_TIMEOUT_SEC*time.Second)
+	defer cancel()
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		cancel()
 		return errors.Wrap(err, "begin transaction error")
 	}
 	q1 := `
@@ -107,14 +107,12 @@ func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
 `
 	stmt1, err := tx.PrepareContext(ctx, q1)
 	if err != nil {
-		cancel()
 		return errors.Wrapf(err, "query prepare error: %s", q1)
 	}
 	stmtFindNodeID, err := tx.PrepareContext(ctx, `
 	SELECT node_id FROM nodes WHERE ipv4 = $1 AND port = $2
 `)
 	if err != nil {
-		cancel()
 		return errors.Wrap(err, "query prepare error")
 	}
 	q2 := `
@@ -127,7 +125,6 @@ func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
 `
 	stmt2, err := tx.PrepareContext(ctx, q2)
 	if err != nil {
-		cancel()
 		return errors.Wrapf(err, "query prepare error: %s", q2)
 	}
 
@@ -141,7 +138,6 @@ func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
 			err = stmtFindNodeID.QueryRowContext(ctx, flow.Local.Addr, flow.Local.PortInt()).Scan(&localNodeid)
 		}
 		if err != nil {
-			cancel()
 			return errors.Wrapf(err, "query error")
 		}
 		err = stmt1.QueryRowContext(ctx, flow.Peer.Addr, flow.Peer.PortInt()).Scan(&peerNodeid)
@@ -149,7 +145,6 @@ func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
 			err = stmtFindNodeID.QueryRowContext(ctx, flow.Peer.Addr, flow.Peer.PortInt()).Scan(&peerNodeid)
 		}
 		if err != nil {
-			cancel()
 			return errors.Wrapf(err, "query error")
 		}
 		if flow.Direction == tcpflow.FlowActive {
@@ -158,7 +153,6 @@ func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
 			_, err = stmt2.ExecContext(ctx, flow.Direction.String(), peerNodeid, localNodeid, flow.Connections)
 		}
 		if err != nil {
-			cancel()
 			return errors.Wrapf(err, "query error")
 		}
 	}
