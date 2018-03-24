@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // database/sql driver
 	"github.com/pkg/errors"
 	"github.com/yuuki/lstf/tcpflow"
 	"github.com/yuuki/mftracer/data"
