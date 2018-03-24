@@ -200,15 +200,15 @@ func (db *DB) FindSourceByDestIPAddr(addr net.IP) ([]*AddrPort, error) {
 		var (
 			connections int
 			updated     time.Time
-			source_ipv4 string
-			source_port int16
+			sipv4       string
+			sport       int16
 		)
-		if err := rows.Scan(&connections, &updated, &source_ipv4, &source_port); err != nil {
+		if err := rows.Scan(&connections, &updated, &sipv4, &sport); err != nil {
 			return nil, errors.Wrap(err, "postgres query error")
 		}
 		addrports = append(addrports, &AddrPort{
-			IPAddr:      net.ParseIP(source_ipv4),
-			Port:        source_port,
+			IPAddr:      net.ParseIP(sipv4),
+			Port:        sport,
 			Connections: connections,
 		})
 	}
