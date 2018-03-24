@@ -93,7 +93,8 @@ const (
 	POST_TIMEOUT_SEC = 10
 )
 
-func (db *DB) PostHostFlows(flows tcpflow.HostFlows) error {
+// InsertOrUpdateHostFlows insert host flows or update it if the same flow exists.
+func (db *DB) InsertOrUpdateHostFlows(flows tcpflow.HostFlows) error {
 	ctx, cancel := context.WithTimeout(context.Background(), POST_TIMEOUT_SEC*time.Second)
 	defer cancel()
 	tx, err := db.BeginTx(ctx, nil)

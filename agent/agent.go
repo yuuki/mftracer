@@ -59,6 +59,6 @@ func collectAndPostHostFlows(db *db.DB, errChan chan error) {
 		errChan <- err
 		return
 	}
-	errChan <- db.PostHostFlows(flows)
+	errChan <- db.InsertOrUpdateHostFlows(flows)
 	log.Printf("Post host flows (%d)", len(flows))
 }
