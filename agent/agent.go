@@ -21,8 +21,12 @@ func Start(interval time.Duration, db *db.DB) {
 	log.Printf("Received %s gracefully shutdown...\n", sig)
 
 	time.Sleep(3 * time.Second)
-	log.Printf("Closing db connection...\n", sig)
-	db.Close()
+	log.Println("--> Closing db connection...")
+	if err := db.Close(); err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println("Closed db connection")
 }
 
 // Watch watches host flows for localhost.
