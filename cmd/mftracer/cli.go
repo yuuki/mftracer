@@ -59,54 +59,60 @@ func (c *CLI) Run(args []string) int {
 		return exitCodeOK
 	}
 
-	if createSchema {
-		log.Println("Connecting postgres ...")
-		db, err := db.New(&db.Opt{
-			DBName:   dbname,
-			User:     dbuser,
-			Password: dbpass,
-			Host:     dbhost,
-			Port:     dbport,
-		})
-		if err != nil {
-			log.Printf("postgres initialize error: %v\n", err)
-			return exitCodeErr
-		}
+	dbopt := &db.Opt{
+		DBName:   dbname,
+		User:     dbuser,
+		Password: dbpass,
+		Host:     dbhost,
+		Port:     dbport,
+	}
 
-		log.Println("Creating postgres schema ...")
-		if err := db.CreateSchema(); err != nil {
-			log.Printf("postgres initialize error: %v\n", err)
-			return exitCodeErr
-		}
-		return exitCodeOK
+	if createSchema {
+		return c.createSchema(dbopt)
 	}
 
 	if destipv4 != "" {
-		db, err := db.New(&db.Opt{
-			DBName:   dbname,
-			User:     dbuser,
-			Password: dbpass,
-			Host:     dbhost,
-			Port:     dbport,
-		})
-		if err != nil {
-			log.Printf("postgres initialize error: %v\n", err)
-			return exitCodeErr
-		}
-
-		ip := net.ParseIP(destipv4)
-		addrports, err := db.FindSourceByDestIPAddr(ip)
-		if err != nil {
-			log.Printf("postgres find source error: %v\n", err)
-			return exitCodeErr
-		}
-		fmt.Println(ip)
-		for _, addrport := range addrports {
-			fmt.Print("└<-- ")
-			fmt.Println(addrport)
-		}
+		return c.destIPv4(destipv4, dbopt)
 	}
 
+	return exitCodeOK
+}
+
+func (c *CLI) createSchema(opt *db.Opt) int {
+	log.Println("Connecting postgres ...")
+
+	db, err := db.New(opt)
+	if err != nil {
+		log.Printf("postgres initialize error: %v\n", err)
+		return exitCodeErr
+	}
+
+	log.Println("Creating postgres schema ...")
+	if err := db.CreateSchema(); err != nil {
+		log.Printf("postgres initialize error: %v\n", err)
+		return exitCodeErr
+	}
+	return exitCodeOK
+}
+
+func (c *CLI) destIPv4(ipv4 string, opt *db.Opt) int {
+	db, err := db.New(opt)
+	if err != nil {
+		log.Printf("postgres initialize error: %v\n", err)
+		return exitCodeErr
+	}
+
+	ip := net.ParseIP(ipv4)
+	addrports, err := db.FindSourceByDestIPAddr(ip)
+	if err != nil {
+		log.Printf("postgres find source error: %v\n", err)
+		return exitCodeErr
+	}
+	fmt.Println(ip)
+	for _, addrport := range addrports {
+		fmt.Print("└<-- ")
+		fmt.Println(addrport)
+	}
 	return exitCodeOK
 }
 
