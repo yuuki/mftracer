@@ -112,7 +112,7 @@ func (c *CLI) destIPv4(ipv4 string, depth int, opt *db.Opt) int {
 		return exitCodeErr
 	}
 	ip := net.ParseIP(ipv4)
-	fmt.Println(ipv4)
+	fmt.Fprintln(c.outStream, ipv4)
 	if err := c.printDestIPAddr(db, ip, 1, depth); err != nil {
 		return exitCodeErr
 	}
@@ -131,9 +131,9 @@ func (c *CLI) printDestIPAddr(db *db.DB, ipv4 net.IP, curDepth, depth int) error
 	curDepth++
 	depth--
 	for _, addrport := range addrports {
-		fmt.Print(indent)
-		fmt.Print("└<-- ")
-		fmt.Println(addrport)
+		fmt.Fprint(c.outStream, indent)
+		fmt.Fprint(c.outStream, "└<-- ")
+		fmt.Fprint(c.outStream, addrport)
 		if err := c.printDestIPAddr(db, addrport.IPAddr, curDepth, depth); err != nil {
 			return err
 		}
