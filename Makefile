@@ -6,7 +6,7 @@ BUILD_LDFLAGS = -X $(PKG).commit=$(COMMIT) -X $(PKG).date=$(DATE)
 .PHONY: build
 build:
 	go generate ./...
-	find cmd -d 1 | xargs -n1 -I{} go build -ldflags="$(BUILD_LDFLAGS)" $(PKG)/{}
+	find cmd -maxdepth 1 -mindepth 1 | xargs -n1 -I{} go build -ldflags="$(BUILD_LDFLAGS)" $(PKG)/{}
 
 .PHONY: test
 test:
@@ -14,4 +14,4 @@ test:
 
 .PHONY: deps
 deps:
-	go get github.com/go-bindata/go-bindata
+	go get github.com/go-bindata/go-bindata/...
