@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -e
+
+S3_SAM_ARTIFACTS_BUCKET_NAME="$1"
+PROJECT="$2"
+
+MAIN_TEMPLATE="sam.yaml"
+OUT=".sam.yaml"
+S3_PREFIX="${PROJECT}"
+
+# package
+aws cloudformation package \
+    --template-file "${MAIN_TEMPLATE}" \
+    --s3-bucket "${S3_SAM_ARTIFACTS_BUCKET_NAME}" \
+    --s3-prefix "${S3_PREFIX}" \
+    --output-template-file "${OUT}"

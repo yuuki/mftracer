@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Creates resources for mftracer
+Parameters:
+  # see env/example.env about parameters
+  KinesisStreamShardCount:
+    Type: Number
+    Default: 1
+  NetworkStackName:
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: "^[a-zA-Z][-a-zA-Z0-9]*$"
+  DBUsername:
+    AllowedPattern: "[a-zA-Z0-9]+"
+    ConstraintDescription: must be between 1 to 16 alphanumeric characters.
+    Description: The database admin account user name, between 1 to 16 alphanumeric characters.
+    MaxLength: '16'
+    MinLength: '1'
+    Type: String
+  DBPassword:
+    AllowedPattern: "[a-zA-Z0-9]+"
+    ConstraintDescription: must be between 8 to 41 alphanumeric characters.
+    Description: The database admin account password, between 8 to 41 alphanumeric characters.
+    MaxLength: '41'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+  DBInstanceClass:
+    Default: db.t2.micro
+    Type: String
+    ConstraintDescription: DB instance class not supported
+    AllowedValues:
+      - db.t2.micro
+      - db.t2.small
+      - db.t2.medium
+      - db.t2.xlarge
+      - db.r4.large
+      - db.r4.xlarge
+      - db.r4.2xlarge
+      - db.r4.4xlarge
+      - db.r4.8xlarge
+      - db.r4.16xlarge
+Resources:
+  KinesisStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: WriterStream
+      ShardCount: !Ref KinesisStreamShardCount
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      SubnetIds:
+      - Fn::ImportValue: !Sub ${NetworkStackName}-PrivateSubnet1ID
+      - Fn::ImportValue: !Sub ${NetworkStackName}-PrivateSubnet2ID
+      Tags:
+      - Key: Name
+        Value: !Ref AWS::StackName

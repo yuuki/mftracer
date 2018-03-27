@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -e
+
+ENV_FILE_PATH="$1"
+. ${ENV_FILE_PATH}
+TEMPLATE=".sam.yaml"
+CFN_STACK_NAME="mftracer"
+
+# deploy
+aws cloudformation deploy \
+--template-file "$TEMPLATE" \
+--stack-name "$CFN_STACK_NAME" \
+--capabilities "CAPABILITY_IAM" \
+--parameter-overrides KinesisStreamShardCount=$KINESIS_STREAM_SHARD_COUNT \
+DBUsername=$DB_USER_NAME \
+DBPassword=$DB_PASSWORD \
+BuildSkippedBy="$BUILD_SKIPPED_BY" \
+--region "$AWS_DEFAULT_REGION"
