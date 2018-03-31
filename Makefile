@@ -37,3 +37,14 @@ deploy-sam:
 .PHONY: destroy
 destroy:
 	aws cloudformation delete-stack --stack-name $(PROJECT)
+
+# vpc for trial
+.PHONY: vpc/create
+vpc/create:
+	cfstacker create vpc
+.PHONY: vpc/update
+vpc/update:
+	cfstacker update vpc
+.PHONY: vpc/destroy
+vpc/destroy:
+	cfstacker delete vpc

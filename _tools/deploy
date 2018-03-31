@@ -11,8 +11,10 @@ aws cloudformation deploy \
 --template-file "$TEMPLATE" \
 --stack-name "$CFN_STACK_NAME" \
 --capabilities "CAPABILITY_IAM" \
---parameter-overrides KinesisStreamShardCount=$KINESIS_STREAM_SHARD_COUNT \
+--parameter-overrides \
+KinesisStreamShardNum=$KINESIS_STREAM_SHARD_NUM \
 DBUsername=$DB_USER_NAME \
 DBPassword=$DB_PASSWORD \
-BuildSkippedBy="$BUILD_SKIPPED_BY" \
+DBInstanceClass=$DB_INSTANCE_CLASS \
+NetworkStackName=$NETWORK_STACK_NAME \
 --region "$AWS_DEFAULT_REGION"

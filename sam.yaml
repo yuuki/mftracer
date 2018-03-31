@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: Creates resources for mftracer
 Parameters:
   # see env/example.env about parameters
-  KinesisStreamShardCount:
+  KinesisStreamShardNum:
     Type: Number
     Default: 1
   NetworkStackName:
@@ -41,31 +41,38 @@ Parameters:
       - db.r4.4xlarge
       - db.r4.8xlarge
       - db.r4.16xlarge
+  DBAllocatedStorageSize:
+    Default: 20
+    Type: Number
+    MaxValue: 1600
+    MinValue: 20
 Resources:
   KinesisStream:
     Type: AWS::Kinesis::Stream
     Properties:
-      Name: WriterStream
-      ShardCount: !Ref KinesisStreamShardCount
+      Name: 'WriterStream'
+      ShardCount: !Ref KinesisStreamShardNum
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
+      DBSubnetGroupDescription: 'subnet group for mftracer'
       SubnetIds:
-      - Fn::ImportValue: !Sub ${NetworkStackName}-PrivateSubnet1ID
-      - Fn::ImportValue: !Sub ${NetworkStackName}-PrivateSubnet2ID
+      - Fn::ImportValue: !Join ['-', [!Ref 'AWS::Region', !Sub '${NetworkStackName}', 'PublicSubnet1']]
+      - Fn::ImportValue: !Join ['-', [!Ref 'AWS::Region', !Sub '${NetworkStackName}', 'PublicSubnet2']]
       Tags:
       - Key: Name
         Value: !Ref AWS::StackName
   DBInstance:
-    Type: 'AWS::RDS::DBInstance'
+    Type: AWS::RDS::DBInstance
     Properties:
-      DBName: !Ref "mftracer"
-      DBParameterGroupName:
+      DBName: "mftracer"
+      DBParameterGroupName: "default.postgres10"
       DBInstanceClass: !Ref "DBInstanceClass"
-      Engine: "postgresql"
+      DBSubnetGroupName: !Ref "DBSubnetGroup"
+      Engine: "postgres"
       EngineVersion: "10.1"
       MasterUsername: !Ref "DBUsername"
       MasterUserPassword: !Ref "DBPassword"
-      AllocatedStorage:
+      AllocatedStorage: !Ref "DBAllocatedStorageSize"
       VPCSecurityGroups:
-      DeletionPolicy: "Snapshot"
+        - Fn::ImportValue: !Join ['-', [!Ref 'AWS::Region', !Sub '${NetworkStackName}', 'DefaultSecurityGroup']]
