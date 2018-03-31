@@ -56,3 +56,16 @@ Resources:
       Tags:
       - Key: Name
         Value: !Ref AWS::StackName
+  DBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBName: !Ref "mftracer"
+      DBParameterGroupName:
+      DBInstanceClass: !Ref "DBInstanceClass"
+      Engine: "postgresql"
+      EngineVersion: "10.1"
+      MasterUsername: !Ref "DBUsername"
+      MasterUserPassword: !Ref "DBPassword"
+      AllocatedStorage:
+      VPCSecurityGroups:
+      DeletionPolicy: "Snapshot"
