@@ -50,7 +50,6 @@ Resources:
   KinesisStream:
     Type: AWS::Kinesis::Stream
     Properties:
-      Name: 'WriterStream'
       ShardCount: !Ref KinesisStreamShardNum
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -76,3 +75,12 @@ Resources:
       AllocatedStorage: !Ref "DBAllocatedStorageSize"
       VPCSecurityGroups:
         - Fn::ImportValue: !Join ['-', [!Ref 'AWS::Region', !Sub '${NetworkStackName}', 'DefaultSecurityGroup']]
+Outputs:
+  KinesisStreamsId:
+    Value: !Ref KinesisStream
+    Export:
+      Name: !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'KinesisStreamsId']]
+  RDSIdentifier:
+    Value: !Ref DBInstance
+    Export:
+      Name: !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'RDSIdentifier']]
