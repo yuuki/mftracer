@@ -4,7 +4,7 @@
 
 ## Architecture Overview
 
-```
+```ascii
 +-----------+
 | mftracerd |----------+
 +-----------+          | PutItem
@@ -25,6 +25,19 @@
                                    +----------+
 ```
 
+## Usage
+
+```shell
+mftctl --level 2 --dest-ipv4 10.0.0.21
+10.0.0.21
+└<-- 10.0.0.22:many (connections:30)
+└<-- 10.0.0.23:many (connections:30)
+└<-- 10.0.0.24:many (connections:30)
+	└<-- 10.0.0.30:many (connections:1)
+	└<-- 10.0.0.31:many (connections:1)
+└<-- 10.0.0.25:many (connections:30)
+...
+```
 
 ## License
 

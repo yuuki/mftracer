@@ -40,7 +40,7 @@ func (c *CLI) Run(args []string) int {
 		destipv4     string
 		depth        int
 	)
-	flags := flag.NewFlagSet("mftracer", flag.ContinueOnError)
+	flags := flag.NewFlagSet("mftctl", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
 	flags.Usage = func() {
 		fmt.Fprint(c.errStream, helpText)
@@ -52,7 +52,6 @@ func (c *CLI) Run(args []string) int {
 	flags.StringVar(&dbhost, "dbhost", "", "")
 	flags.StringVar(&dbport, "dbport", "", "")
 	flags.StringVar(&dbname, "dbname", "", "")
-	flags.IntVar(&depth, "L", maxGraphDepth, "") // level
 	flags.IntVar(&depth, "depth", maxGraphDepth, "")
 	flags.BoolVar(&ver, "version", false, "")
 	if err := flags.Parse(args[1:]); err != nil {
@@ -113,13 +112,13 @@ func (c *CLI) destIPv4(ipv4 string, depth int, opt *db.Opt) int {
 	}
 	ip := net.ParseIP(ipv4)
 	fmt.Fprintln(c.outStream, ipv4)
-	if err := c.printDestIPAddr(db, ip, 1, depth); err != nil {
+	if err := c.printDestIPv4(db, ip, 1, depth); err != nil {
 		return exitCodeErr
 	}
 	return exitCodeOK
 }
 
-func (c *CLI) printDestIPAddr(db *db.DB, ipv4 net.IP, curDepth, depth int) error {
+func (c *CLI) printDestIPv4(db *db.DB, ipv4 net.IP, curDepth, depth int) error {
 	addrports, err := db.FindSourceByDestIPAddr(ipv4)
 	if err != nil {
 		return err
@@ -134,7 +133,7 @@ func (c *CLI) printDestIPAddr(db *db.DB, ipv4 net.IP, curDepth, depth int) error
 		fmt.Fprint(c.outStream, indent)
 		fmt.Fprint(c.outStream, "└<-- ")
 		fmt.Fprint(c.outStream, addrport)
-		if err := c.printDestIPAddr(db, addrport.IPAddr, curDepth, depth); err != nil {
+		if err := c.printDestIPv4(db, addrport.IPAddr, curDepth, depth); err != nil {
 			return err
 		}
 	}
