@@ -6,9 +6,13 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"strings"
 
+	mackerel "github.com/mackerelio/mackerel-client-go"
+
 	"github.com/yuuki/mftracer/db"
+	"github.com/yuuki/mftracer/registry"
 )
 
 const (
@@ -38,6 +42,8 @@ func (c *CLI) Run(args []string) int {
 		dbport       string
 		dbname       string
 		destipv4     string
+		destservice  string
+		destrole     string
 		depth        int
 	)
 	flags := flag.NewFlagSet("mftctl", flag.ContinueOnError)
@@ -47,6 +53,8 @@ func (c *CLI) Run(args []string) int {
 	}
 	flags.BoolVar(&createSchema, "create-schema", false, "")
 	flags.StringVar(&destipv4, "dest-ipv4", "", "")
+	flags.StringVar(&destservice, "dest-service", "", "")
+	flags.StringVar(&destrole, "dest-role", "", "")
 	flags.StringVar(&dbuser, "dbuser", "", "")
 	flags.StringVar(&dbpass, "dbpass", "", "")
 	flags.StringVar(&dbhost, "dbhost", "", "")
@@ -82,6 +90,16 @@ func (c *CLI) Run(args []string) int {
 
 	if destipv4 != "" {
 		return c.destIPv4(destipv4, depth, dbopt)
+	}
+
+	if destservice != "" && destrole != "" {
+		clt := mackerel.NewClient(os.Getenv("MACKEREL_API_KEY"))
+		ipaddrs, err := registry.FindIPAddrsByDestServiceAndRoles(clt, destservice, []string{destrole})
+		if err != nil {
+			log.Println(err)
+			return exitCodeErr
+		}
+		log.Println(ipaddrs)
 	}
 
 	return exitCodeOK
