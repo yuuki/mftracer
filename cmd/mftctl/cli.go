@@ -6,9 +6,13 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 	"strings"
 
+	mackerel "github.com/mackerelio/mackerel-client-go"
+
 	"github.com/yuuki/mftracer/db"
+	"github.com/yuuki/mftracer/registry"
 )
 
 const (
@@ -16,6 +20,17 @@ const (
 	exitCodeErr   = 10 + iota
 	maxGraphDepth = 4
 )
+
+type rolesFlag []string
+
+func (r *rolesFlag) String() string {
+	return strings.Join(*r, ",")
+}
+
+func (r *rolesFlag) Set(v string) error {
+	*r = append(*r, v)
+	return nil
+}
 
 // CLI is the command line object.
 type CLI struct {
@@ -38,6 +53,8 @@ func (c *CLI) Run(args []string) int {
 		dbport       string
 		dbname       string
 		destipv4     string
+		destservice  string
+		destroles    rolesFlag
 		depth        int
 	)
 	flags := flag.NewFlagSet("mftctl", flag.ContinueOnError)
@@ -47,6 +64,8 @@ func (c *CLI) Run(args []string) int {
 	}
 	flags.BoolVar(&createSchema, "create-schema", false, "")
 	flags.StringVar(&destipv4, "dest-ipv4", "", "")
+	flags.StringVar(&destservice, "dest-service", "", "")
+	flags.Var(&destroles, "dest-roles", "")
 	flags.StringVar(&dbuser, "dbuser", "", "")
 	flags.StringVar(&dbpass, "dbpass", "", "")
 	flags.StringVar(&dbhost, "dbhost", "", "")
@@ -84,6 +103,17 @@ func (c *CLI) Run(args []string) int {
 		return c.destIPv4(destipv4, depth, dbopt)
 	}
 
+	if destservice != "" && len(destroles) > 0 {
+		clt := mackerel.NewClient(os.Getenv("MACKEREL_API_KEY"))
+		ipaddrsByRole, err := registry.FindIPAddrsByDestServiceAndRoles(clt, destservice, destroles)
+		if err != nil {
+			log.Println(err)
+			return exitCodeErr
+		}
+		log.Println(ipaddrsByRole)
+		return c.destServiceAndRoles(ipaddrsByRole, depth, dbopt)
+	}
+
 	return exitCodeOK
 }
 
@@ -118,6 +148,23 @@ func (c *CLI) destIPv4(ipv4 string, depth int, opt *db.Opt) int {
 	return exitCodeOK
 }
 
+func (c *CLI) destServiceAndRoles(roles map[string][]net.IP, depth int, opt *db.Opt) int {
+	db, err := db.New(opt)
+	if err != nil {
+		log.Printf("postgres initialize error: %v\n", err)
+		return exitCodeErr
+	}
+	for role, ipaddrs := range roles {
+		fmt.Fprintln(c.outStream, role)
+		for _, ipaddr := range ipaddrs {
+			if err := c.printDestIPv4(db, ipaddr, 1, depth); err != nil {
+				return exitCodeErr
+			}
+		}
+	}
+	return exitCodeOK
+}
+
 func (c *CLI) printDestIPv4(db *db.DB, ipv4 net.IP, curDepth, depth int) error {
 	addrports, err := db.FindSourceByDestIPAddr(ipv4)
 	if err != nil {
@@ -133,6 +180,7 @@ func (c *CLI) printDestIPv4(db *db.DB, ipv4 net.IP, curDepth, depth int) error {
 		fmt.Fprint(c.outStream, indent)
 		fmt.Fprint(c.outStream, "└<-- ")
 		fmt.Fprint(c.outStream, addrport)
+		fmt.Fprintln(c.outStream)
 		if err := c.printDestIPv4(db, addrport.IPAddr, curDepth, depth); err != nil {
 			return err
 		}
@@ -140,9 +188,9 @@ func (c *CLI) printDestIPv4(db *db.DB, ipv4 net.IP, curDepth, depth int) error {
 	return nil
 }
 
-var helpText = `Usage: mtracer [options]
+var helpText = `Usage: mttctl [options]
 
-  
+mftctl is a CLI controller for mftracer system.
 
 Options:
   --create-schema           create mftracer table schema for postgres
@@ -151,6 +199,9 @@ Options:
   --dbhost                  postgres host
   --dbport                  postgres port
   --dbname                  postgres database name
+  --dest-ipv4               filter by destination ipv4 address
+  --dest-service            filter by service in Mackerel
+  --dest-roles              filter by roles in Mackerel (required --dest-service)
   --version, -v	            print version
   --help, -h                print help
 `
