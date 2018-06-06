@@ -188,9 +188,9 @@ func (c *CLI) printDestIPv4(db *db.DB, ipv4 net.IP, curDepth, depth int) error {
 	return nil
 }
 
-var helpText = `Usage: mtracer [options]
+var helpText = `Usage: mttctl [options]
 
-  
+mftctl is a CLI controller for mftracer system.
 
 Options:
   --create-schema           create mftracer table schema for postgres
@@ -199,6 +199,9 @@ Options:
   --dbhost                  postgres host
   --dbport                  postgres port
   --dbname                  postgres database name
+  --dest-ipv4               filter by destination ipv4 address
+  --dest-service            filter by service in Mackerel
+  --dest-roles              filter by roles in Mackerel (required --dest-service)
   --version, -v	            print version
   --help, -h                print help
 `
