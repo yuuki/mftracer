@@ -94,12 +94,13 @@ func (c *CLI) Run(args []string) int {
 
 	if destservice != "" && destrole != "" {
 		clt := mackerel.NewClient(os.Getenv("MACKEREL_API_KEY"))
-		ipaddrs, err := registry.FindIPAddrsByDestServiceAndRoles(clt, destservice, []string{destrole})
+		ipaddrsByRole, err := registry.FindIPAddrsByDestServiceAndRoles(clt, destservice, []string{destrole})
 		if err != nil {
 			log.Println(err)
 			return exitCodeErr
 		}
-		log.Println(ipaddrs)
+		log.Println(ipaddrsByRole)
+		return c.destServiceAndRoles(ipaddrsByRole, depth, dbopt)
 	}
 
 	return exitCodeOK
@@ -136,6 +137,23 @@ func (c *CLI) destIPv4(ipv4 string, depth int, opt *db.Opt) int {
 	return exitCodeOK
 }
 
+func (c *CLI) destServiceAndRoles(roles map[string][]net.IP, depth int, opt *db.Opt) int {
+	db, err := db.New(opt)
+	if err != nil {
+		log.Printf("postgres initialize error: %v\n", err)
+		return exitCodeErr
+	}
+	for role, ipaddrs := range roles {
+		fmt.Fprintln(c.outStream, role)
+		for _, ipaddr := range ipaddrs {
+			if err := c.printDestIPv4(db, ipaddr, 1, depth); err != nil {
+				return exitCodeErr
+			}
+		}
+	}
+	return exitCodeOK
+}
+
 func (c *CLI) printDestIPv4(db *db.DB, ipv4 net.IP, curDepth, depth int) error {
 	addrports, err := db.FindSourceByDestIPAddr(ipv4)
 	if err != nil {
@@ -151,6 +169,7 @@ func (c *CLI) printDestIPv4(db *db.DB, ipv4 net.IP, curDepth, depth int) error {
 		fmt.Fprint(c.outStream, indent)
 		fmt.Fprint(c.outStream, "└<-- ")
 		fmt.Fprint(c.outStream, addrport)
+		fmt.Fprintln(c.outStream)
 		if err := c.printDestIPv4(db, addrport.IPAddr, curDepth, depth); err != nil {
 			return err
 		}

@@ -10,7 +10,7 @@ import (
 // FindIPAddrsByDestServiceAndRoles find IP Addresses of hosts filtered by service and roles.
 // TODO: handling status
 func FindIPAddrsByDestServiceAndRoles(client *mackerel.Client, service string, roles []string) (
-	[]net.IP, error) {
+	map[string][]net.IP, error) {
 	hosts, err := client.FindHosts(&mackerel.FindHostsParam{
 		Service: service,
 		Roles:   roles,
@@ -18,17 +18,24 @@ func FindIPAddrsByDestServiceAndRoles(client *mackerel.Client, service string, r
 	if err != nil {
 		return nil, err
 	}
-	ipaddrs := make([]net.IP, 0, len(hosts))
+	ipaddrsByRole := make(map[string][]net.IP, len(roles))
+	for _, role := range roles {
+		ipaddrsByRole[service+":"+role] = make([]net.IP, 0)
+	}
 	for _, host := range hosts {
-		for _, iface := range host.Interfaces {
-			for _, ipv4 := range iface.IPv4Addresses {
-				ipaddr := net.ParseIP(ipv4)
-				if ipaddr == nil {
-					log.Printf("couldn't parse %s as an IPv4 address", ipv4)
+		for _, roleFullname := range host.GetRoleFullnames() {
+			ipaddrs := ipaddrsByRole[roleFullname]
+			for _, iface := range host.Interfaces {
+				for _, ipv4 := range iface.IPv4Addresses {
+					ipaddr := net.ParseIP(ipv4)
+					if ipaddr == nil {
+						log.Printf("couldn't parse %s as an IPv4 address", ipv4)
+					}
+					ipaddrs = append(ipaddrs, ipaddr)
 				}
-				ipaddrs = append(ipaddrs, ipaddr)
 			}
+			ipaddrsByRole[roleFullname] = ipaddrs
 		}
 	}
-	return ipaddrs, nil
+	return ipaddrsByRole, nil
 }
