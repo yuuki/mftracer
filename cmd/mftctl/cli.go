@@ -21,6 +21,17 @@ const (
 	maxGraphDepth = 4
 )
 
+type rolesFlag []string
+
+func (r *rolesFlag) String() string {
+	return strings.Join(*r, ",")
+}
+
+func (r *rolesFlag) Set(v string) error {
+	*r = append(*r, v)
+	return nil
+}
+
 // CLI is the command line object.
 type CLI struct {
 	// outStream and errStream are the stdout and stderr
@@ -43,7 +54,7 @@ func (c *CLI) Run(args []string) int {
 		dbname       string
 		destipv4     string
 		destservice  string
-		destrole     string
+		destroles    rolesFlag
 		depth        int
 	)
 	flags := flag.NewFlagSet("mftctl", flag.ContinueOnError)
@@ -54,7 +65,7 @@ func (c *CLI) Run(args []string) int {
 	flags.BoolVar(&createSchema, "create-schema", false, "")
 	flags.StringVar(&destipv4, "dest-ipv4", "", "")
 	flags.StringVar(&destservice, "dest-service", "", "")
-	flags.StringVar(&destrole, "dest-role", "", "")
+	flags.Var(&destroles, "dest-roles", "")
 	flags.StringVar(&dbuser, "dbuser", "", "")
 	flags.StringVar(&dbpass, "dbpass", "", "")
 	flags.StringVar(&dbhost, "dbhost", "", "")
@@ -92,9 +103,9 @@ func (c *CLI) Run(args []string) int {
 		return c.destIPv4(destipv4, depth, dbopt)
 	}
 
-	if destservice != "" && destrole != "" {
+	if destservice != "" && len(destroles) > 0 {
 		clt := mackerel.NewClient(os.Getenv("MACKEREL_API_KEY"))
-		ipaddrsByRole, err := registry.FindIPAddrsByDestServiceAndRoles(clt, destservice, []string{destrole})
+		ipaddrsByRole, err := registry.FindIPAddrsByDestServiceAndRoles(clt, destservice, destroles)
 		if err != nil {
 			log.Println(err)
 			return exitCodeErr
