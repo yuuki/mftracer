@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	_ "github.com/lib/pq" // database/sql driver
@@ -179,8 +180,44 @@ func (a *AddrPort) String() string {
 	return fmt.Sprintf("%s:%s (connections:%d)", a.IPAddr, port, a.Connections)
 }
 
-// FindSourceByDestIPAddr find source ip addrs.
-func (db *DB) FindSourceByDestIPAddr(addr net.IP) ([]*AddrPort, error) {
+// FindListeningPortsByAddrs find listening ports for multiple `addrs`.
+func (db *DB) FindListeningPortsByAddrs(addrs []net.IP) (map[string][]int16, error) {
+	ipv4s := make([]string, 0, len(addrs))
+	for _, addr := range addrs {
+		ipv4s = append(ipv4s, addr.String())
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	rows, err := db.QueryContext(ctx, `
+	SELECT ipv4, port FROM nodes WHERE nodes.ipv4 IN ($1)
+`, strings.Join(ipv4s, ","))
+	if err == sql.ErrNoRows {
+		return map[string][]int16{}, nil
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "query error")
+	}
+	defer rows.Close()
+
+	portsbyaddr := map[string][]int16{}
+	for rows.Next() {
+		var (
+			addr string
+			port int16
+		)
+		if err := rows.Scan(&addr, &port); err != nil {
+			return nil, errors.Wrap(err, "postgres query error")
+		}
+		if port == 0 { // port == 0 means 'many'
+			continue
+		}
+		portsbyaddr[addr] = append(portsbyaddr[addr], port)
+	}
+	return portsbyaddr, nil
+}
+
+// FindSourceByDestAddrAndPort find source nodes.
+func (db *DB) FindSourceByDestAddrAndPort(addr net.IP, port int16) ([]*AddrPort, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	rows, err := db.QueryContext(ctx, `
@@ -189,8 +226,8 @@ func (db *DB) FindSourceByDestIPAddr(addr net.IP) ([]*AddrPort, error) {
 	FROM flows
 	INNER JOIN nodes AS source_nodes ON source_nodes.node_id = flows.source_node_id
 	INNER JOIN nodes AS dest_nodes on dest_nodes.node_id = flows.destination_node_id
-	WHERE direction = 'passive' AND dest_nodes.ipv4 = $1
-`, addr.String())
+	WHERE direction = 'passive' AND dest_nodes.ipv4 = $1 AND dest_nodes.port = $2
+`, addr.String(), port)
 	if err == sql.ErrNoRows {
 		return []*AddrPort{}, nil
 	}
