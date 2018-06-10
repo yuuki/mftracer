@@ -163,10 +163,17 @@ func (c *CLI) destServiceAndRoles(roles map[string][]net.IP, depth int, opt *db.
 		return exitCodeErr
 	}
 	for role, ipaddrs := range roles {
-		fmt.Fprintln(c.outStream, role)
-		for _, ipaddr := range ipaddrs {
-			if err := c.printDestIPv4(db, ipaddr, -1, 1, depth); err != nil {
-				return exitCodeErr
+		portsbyaddr, err := db.FindListeningPortsByAddrs(ipaddrs)
+		if err != nil {
+			log.Println(err)
+			return exitCodeErr
+		}
+		for addr, ports := range portsbyaddr {
+			for _, port := range ports {
+				fmt.Fprintf(c.outStream, "%s:%d\n", role, port)
+				if err := c.printDestIPv4(db, net.ParseIP(addr), port, 1, depth); err != nil {
+					return exitCodeErr
+				}
 			}
 		}
 	}

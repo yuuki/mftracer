@@ -6,10 +6,9 @@ import (
 	"database/sql"
 	"fmt"
 	"net"
-	"strings"
 	"time"
 
-	_ "github.com/lib/pq" // database/sql driver
+	"github.com/lib/pq" // database/sql driver
 	"github.com/pkg/errors"
 	"github.com/yuuki/lstf/tcpflow"
 	"github.com/yuuki/mftracer/data"
@@ -189,8 +188,8 @@ func (db *DB) FindListeningPortsByAddrs(addrs []net.IP) (map[string][]int16, err
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	rows, err := db.QueryContext(ctx, `
-	SELECT ipv4, port FROM nodes WHERE nodes.ipv4 IN ($1)
-`, strings.Join(ipv4s, ","))
+	SELECT ipv4, port FROM nodes WHERE nodes.ipv4 = ANY($1)
+`, pq.Array(ipv4s))
 	if err == sql.ErrNoRows {
 		return map[string][]int16{}, nil
 	}
