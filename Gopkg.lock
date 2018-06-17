@@ -23,13 +23,13 @@
     ".",
     "oid"
   ]
-  revision = "b2004221932bd6b13167ef654c81cffac36f7537"
+  revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
 
 [[projects]]
   branch = "master"
   name = "github.com/mackerelio/mackerel-client-go"
   packages = ["."]
-  revision = "baff021a1c194e069a5def7ec764cf0b6174bfaf"
+  revision = "2c3cf558ae6d99e4097b2566ad9c64dc3c18fd98"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -43,8 +43,8 @@
     "internal/common",
     "net"
   ]
-  revision = "5776ff9c7c5d063d574ef53d740f75c68b448e53"
-  version = "v2.18.02"
+  revision = "eeb1d38d69593f121e060d24d17f7b1f0936b203"
+  version = "v2.18.05"
 
 [[projects]]
   name = "github.com/yuuki/lstf"
@@ -61,11 +61,11 @@
     "unix",
     "windows"
   ]
-  revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
+  revision = "6c888cc515d3ed83fc103cf1d84468aad274b0a7"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "245c1943175e244b57117c1699c4ca81db1a1987d3bd994f2ab97b2171929e96"
+  inputs-digest = "d0825138cff17cb736c8d73d853dfb0c52401f1b019ce0aa734284d5b1b49971"
   solver-name = "gps-cdcl"
   solver-version = 1
