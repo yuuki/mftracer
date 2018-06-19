@@ -9,6 +9,7 @@ PKG = github.com/yuuki/$(PROJECT)
 COMMIT = $$(git describe --tags --always)
 DATE = $$(date --utc '+%Y-%m-%d_%H:%M:%S')
 BUILD_LDFLAGS = -X $(PKG).commit=$(COMMIT) -X $(PKG).date=$(DATE)
+CREDITS = ./CREDITS
 
 .PHONY: build
 build:
@@ -19,9 +20,13 @@ build:
 test:
 	go test -v ./...
 
-.PHONY: deps
-deps:
+.PHONY: credits
+credits:
 	go get github.com/go-bindata/go-bindata/...
+	_tools/credits > $(CREDITS)
+ifneq (,$(git status -s $(CREDITS)))
+	go generate -x ./...
+endif
 
 .PHONY: deploy
 deploy: package deploy-sam

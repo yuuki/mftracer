@@ -1,3 +1,4 @@
+//go:generate go-bindata -pkg main -o credits.go ../../CREDITS
 package main
 
 import (
@@ -17,6 +18,10 @@ const (
 	defaultIntervalSec = 30
 )
 
+var (
+	creditsText = string(MustAsset("CREDITS"))
+)
+
 // CLI is the command line object.
 type CLI struct {
 	// outStream and errStream are the stdout and stderr
@@ -30,7 +35,9 @@ func (c *CLI) Run(args []string) int {
 	log.SetOutput(c.errStream)
 
 	var (
-		ver    bool
+		ver     bool
+		credits bool
+
 		once   bool
 		dbuser string
 		dbpass string
@@ -50,12 +57,18 @@ func (c *CLI) Run(args []string) int {
 	flags.StringVar(&dbport, "dbport", "", "")
 	flags.StringVar(&dbname, "dbname", "", "")
 	flags.BoolVar(&ver, "version", false, "")
+	flags.BoolVar(&credits, "credits", false, "")
 	if err := flags.Parse(args[1:]); err != nil {
 		return exitCodeErr
 	}
 
 	if ver {
 		// fmt.Fprintf(c.errStream, "%s version %s, build %s, date %s \n", name, version, commit, date)
+		return exitCodeOK
+	}
+
+	if credits {
+		fmt.Fprintln(c.outStream, creditsText)
 		return exitCodeOK
 	}
 
