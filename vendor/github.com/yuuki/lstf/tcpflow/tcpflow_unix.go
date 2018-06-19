@@ -6,11 +6,10 @@ import (
 	"fmt"
 
 	gnet "github.com/shirou/gopsutil/net"
-
 	"github.com/yuuki/lstf/netutil"
 )
 
-// GetHostFlows gets host flows by lsof.
+// GetHostFlows gets host flows.
 func GetHostFlows() (HostFlows, error) {
 	conns, err := gnet.Connections("tcp")
 	if err != nil {

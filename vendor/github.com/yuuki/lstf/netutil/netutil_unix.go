@@ -1,4 +1,4 @@
-// +build darwin freebsd
+// +build freebsd,darwin
 
 package netutil
 

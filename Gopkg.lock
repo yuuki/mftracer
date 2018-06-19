@@ -61,8 +61,8 @@
     "netutil",
     "tcpflow"
   ]
-  revision = "79ebeec3de06261e13183e3501f34bc99f001b08"
-  version = "v0.4.1"
+  revision = "1032ec4234e0c1a9779d6173e246cb9293dbb470"
+  version = "v0.4.3"
 
 [[projects]]
   branch = "master"
@@ -76,6 +76,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bffa1f97f36082e50def9962d27d78b796a7451db3937cf044e062e9ce8c49ce"
+  inputs-digest = "c9506ec3dcf8a468ecdf9b7675a98eb9ed2b36038b73336957a9768d8e36eb74"
   solver-name = "gps-cdcl"
   solver-version = 1
